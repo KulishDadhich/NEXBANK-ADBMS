@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.vercel/
+coverage/
+test-results/
+playwright-report/
+*.log
+*.pem
+*.key
+.DS_Store
+
+NEXBANK-history.bundle
