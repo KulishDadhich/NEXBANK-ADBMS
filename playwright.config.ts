@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./e2e',workers:1,timeout:30000,use:{baseURL:'http://localhost:5173',trace:'off',screenshot:'off'},webServer:[{command:'npm run dev:backend',url:'http://localhost:4000/health/ready',reuseExistingServer:!process.env.CI},{command:'npm run dev:frontend -- --port 5173',url:'http://localhost:5173',reuseExistingServer:!process.env.CI}]});

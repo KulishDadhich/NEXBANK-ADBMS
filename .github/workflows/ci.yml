@@ -1,0 +1,119 @@
+name: Verify and release
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nexbank-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: isolated_ci_only
+          MYSQL_DATABASE: nexbank_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pisolated_ci_only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DATABASE_URL: mysql://root:isolated_ci_only@127.0.0.1:3306/nexbank_test
+      LAB_DATABASE_URL: mysql://root:isolated_ci_only@127.0.0.1:3306/nexbank_lab
+      JWT_SECRET: isolated-ci-only-jwt-signing-secret-32chars
+      FRONTEND_ORIGINS: http://localhost:5173
+      ADMIN_EMAIL: admin@test.invalid
+      ADMIN_PASSWORD: Test-only-long-password-123!
+      LAB_ENABLED: "true"
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate -w backend
+      - name: Create isolated lab database
+        run: node scripts/create-test-db.mjs
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Check source for accidentally tracked secrets
+        run: node scripts/check-secrets.mjs
+  deploy:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.RELEASE_ENABLED == 'true'
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+      RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
+      RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+      BACKEND_URL: ${{ vars.BACKEND_URL }}
+      EXPECTED_REVISION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Install exact deployment CLI versions
+        run: npm install -g vercel@65.12.1 @railway/cli@5.71.0
+      - name: Validate production target configuration
+        run: node scripts/configure-vercel.mjs
+      - name: Stamp verified source revision
+        run: node scripts/stamp-revision.mjs
+      - name: Deploy verified backend revision
+        run: railway up --ci --project "$RAILWAY_PROJECT_ID" --service "$RAILWAY_SERVICE_ID" --environment "$RAILWAY_ENVIRONMENT_ID"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Wait for backend readiness
+        run: node scripts/check-readiness.mjs
+      - name: Pull frontend configuration
+        working-directory: frontend
+        run: vercel pull --yes --environment=production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Build production frontend
+        working-directory: frontend
+        run: vercel build --prod
+      - name: Stage production without assigning public domains
+        id: stage
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(vercel deploy --prebuilt --prod --skip-domain)"
+          DEPLOYMENT_URL="$url" node ../scripts/validate-deployment-url.mjs
+          printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: Smoke test staged frontend and proxied API
+        run: node scripts/smoke-deployment.mjs
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      - name: Promote the tested frontend build
+        working-directory: frontend
+        run: vercel promote "$DEPLOYMENT_URL"
+        env:
+          DEPLOYMENT_URL: ${{ steps.stage.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
