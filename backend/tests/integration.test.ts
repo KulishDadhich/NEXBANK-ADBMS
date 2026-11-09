@@ -106,14 +106,14 @@ describe("MySQL financial behavior", () => {
   });
   it("rolls back a failure injected after debit and credit", async () => {
     const before = await balances();
-    await rows(
+    await pool.query(
       "CREATE TRIGGER test_fail_post BEFORE INSERT ON transactions FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='CONTROLLED_TEST_FAILURE'",
     );
     try {
       expect((await send("1")).status).toBe(409);
       expect(await balances()).toEqual(before);
     } finally {
-      await rows("DROP TRIGGER test_fail_post");
+      await pool.query("DROP TRIGGER test_fail_post");
     }
   });
   it("prevents concurrent overdraft", async () => {
