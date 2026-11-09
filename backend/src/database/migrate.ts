@@ -28,7 +28,8 @@ export async function migrate(url: string) {
     const [lock]: any = await c.query(
       "SELECT GET_LOCK('nexbank_migrations',30) AS acquired",
     );
-    if (lock[0].acquired !== 1) throw Error("Migration lock unavailable");
+    // mysql2 preserves BIGINT results as strings, including GET_LOCK.
+    if (lock[0].acquired !== 1 && lock[0].acquired !== "1") throw Error("Migration lock unavailable");
     await c.query(
       "CREATE TABLE IF NOT EXISTS schema_migrations (name VARCHAR(100) PRIMARY KEY,checksum CHAR(64) NOT NULL,applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
     );
