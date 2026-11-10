@@ -3,7 +3,7 @@ Secure Transactions. Reliable Banking. Intelligent Management.
 
 An educational ADBMS banking simulation using React, Express, TypeScript and MySQL 8.4. No real money, payment gateway or real banking credentials.
 
-**Status:** implementation and deployment configuration prepared; TypeScript, backend unit tests, frontend component tests and builds pass. Real-MySQL integration, browser E2E and public deployment are NOT verified. Read docs/PROJECT_STATUS.md before presenting this as complete.
+**Status:** source published on GitHub; TypeScript, 13 backend unit tests, 13 frontend tests, 25 real-MySQL integration tests, both production builds and 2 browser E2E tests passed in [CI run #5](https://github.com/KulishDadhich/NEXBANK-ADBMS/actions/runs/42765079615). Public deployment is not yet configured. See docs/PROJECT_STATUS.md and docs/DEPLOYMENT.md.
 
 ## Windows prerequisites
 Node.js 22+, Git, VS Code and Docker Desktop with Linux containers. MySQL Workbench/Postman are optional. Open this NEXBANK-ADBMS folder, the one containing package.json, in VS Code.

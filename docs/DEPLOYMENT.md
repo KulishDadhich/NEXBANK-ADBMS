@@ -1,8 +1,8 @@
 # GitHub, Railway and Vercel deployment
 
-## Recorded state — 9 November 2026
+## Recorded state — 10 November 2026
 
-Source exists locally and has passed TypeScript, unit/component tests and builds. No repository was created or pushed. No application or database was deployed. Railway authentication succeeded. GitHub is connected as KulishDadhich but the available integration cannot create repositories, and local gh is unauthenticated. Repository search returned no NEXBANK-ADBMS. Vercel initially returned 403, but team authorization subsequently succeeded and the project list is accessible. Live URLs therefore do not exist yet.
+Source is published at https://github.com/KulishDadhich/NEXBANK-ADBMS. See TESTING.md for CI evidence. No application or production database has been deployed. Railway and Vercel authentication succeeded, but hosting projects, production variables, release tokens and live verification remain to be configured. Live website/API URLs do not exist yet.
 
 ## Deployment topology
 
@@ -18,40 +18,19 @@ flowchart TD
  Smoke -->|Pass only| Promote[Promote frontend domain]
 ```
 
-## Publish source from Windows PowerShell
+## Get the published project — Windows PowerShell
 
-Install Git and GitHub CLI. Open the extracted NEXBANK-ADBMS folder in VS Code.
-
-Use one of the two publishing paths below.
-
-The archive includes a portable Git bundle rather than a hidden .git directory. To preserve the local commit history, first restore it from a parent directory:
+Install Git and Node.js 22. Clone the existing repository to retain its complete commit history:
 
 ```powershell
-git clone .\NEXBANK-ADBMS\NEXBANK-history.bundle NEXBANK-repository
-cd NEXBANK-repository
-git remote remove origin
-gh auth login
-gh repo create KulishDadhich/NEXBANK-ADBMS --public --source=. --remote=origin --push
+git clone https://github.com/KulishDadhich/NEXBANK-ADBMS.git
+cd NEXBANK-ADBMS
+npm ci
 ```
 
-If using the ordinary extracted source without the bundle:
+For an existing clone, commit or stash your own edits before `git pull --ff-only`. The downloadable ZIP contains source files; it does not contain a hidden .git directory or dependency/build folders. Follow README.md for database setup and running both servers.
 
-```powershell
-git init -b main
-git add .
-git commit -m "Build NEXBANK educational banking application"
-gh auth login
-gh repo create KulishDadhich/NEXBANK-ADBMS --public --source=. --remote=origin --push
-```
-
-If the repository was created in the browser, use this instead of gh repo create:
-
-```powershell
-git remote add origin https://github.com/KulishDadhich/NEXBANK-ADBMS.git
-git push -u origin main
-```
-
-Never add .env files, database dumps, credentials, .vercel state or private keys. The ignore rules and CI path check cover common credential paths; review git diff --cached before committing.
+Never add .env files, database dumps, credentials, .vercel state or private keys. Review `git diff --cached` before committing. The CI path check is not a comprehensive secret scanner.
 
 ## Railway
 
@@ -100,7 +79,7 @@ Configure a production GitHub environment restricted to main; set required revie
 Secrets: RAILWAY_TOKEN (project-scoped), VERCEL_TOKEN, and VERCEL_AUTOMATION_BYPASS_SECRET when deployment protection is enabled.
 Variables: RAILWAY_PROJECT_ID, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID, VERCEL_ORG_ID, VERCEL_PROJECT_ID, BACKEND_URL. Set RELEASE_ENABLED=true only after target IDs, permissions, provisioned schema, runtime grants and health checks are confirmed.
 
-The deploy job has needs: verify and only runs on main. It uploads the exact checked-out verified revision to Railway, waits for readiness with a matching commit revision (so an old healthy instance cannot satisfy the check), stages a production Vercel build without assigning domains, checks SPA refresh routes and the protected API proxy, then promotes that build. Failed verification cannot enter the release job. Failed frontend smoke tests cannot promote it. The pipeline file exists but has not yet run on GitHub; hosting-side settings are not configured.
+The deploy job has needs: verify and only runs on main. It uploads the exact checked-out verified revision to Railway, waits for readiness with a matching commit revision (so an old healthy instance cannot satisfy the check), stages a production Vercel build without assigning domains, checks SPA refresh routes and the protected API proxy, then promotes that build. Failed verification cannot enter the release job. Failed frontend smoke tests cannot promote it. The verification pipeline runs on GitHub. Hosting-side settings are not configured, so deployment remains disabled. CI pins Ubuntu 24.04 because the locked Playwright version does not support Ubuntu 26.04.
 
 Cross-host release is not atomic: a healthy new backend may become live before frontend staging fails. Keep APIs backward-compatible; rollback backend and frontend independently to the recorded prior successful deployments. Database migrations must remain compatible with both versions.
 

@@ -35,8 +35,8 @@ The small lab transfer demonstrates transaction mechanics using two rows; the pr
 
 READ UNCOMMITTED can see a competing uncommitted value. READ COMMITTED sees a new committed value on a later statement. REPEATABLE READ preserves the consistent-read snapshot. SERIALIZABLE within an explicit transaction may block the writer with shared read locks, and the lab records its lock-wait timeout. These are predictions to compare with returned observations, not claimed outcomes from this environment.
 
-The implemented experiment records both repeated point reads and range counts while another session inserts a matching row. InnoDB consistent reads and locking reads differ; do not generalize these observations to all MySQL statements. Runtime results remain unverified here.
+The implemented experiment records both repeated point reads and range counts while another session inserts a matching row. InnoDB consistent reads and locking reads differ; do not generalize these observations to all MySQL statements. The isolated MySQL integration suite verifies these experiment paths; see TESTING.md.
 
 ## Least privilege and views
 
-A view limits the shape of a query result, not who owns each row. The backend still filters user-owned accounts. Provisioning grants read access to views but no direct runtime writes to the financial ledger. A dedicated reporting-only SQL user can be granted SELECT on those views alone; that restricted-view-user demonstration remains to be verified on a running MySQL instance.
+A view limits the shape of a query result, not who owns each row. The backend still filters user-owned accounts. Provisioning grants read access to views but no direct runtime writes to the financial ledger. A dedicated reporting-only SQL user can be granted SELECT on those views alone; the isolated integration suite verifies that this user can read the view but cannot read the base ledger.
