@@ -1,6 +1,6 @@
 # Relational design
 
-The executable schema is in database/migrations/001_core.sql and 002_procedures.sql. SQL migrations are authoritative; do not run Prisma db push against this database. Prisma maps the users table for ordinary user queries only.
+The executable schema is in database/migrations/001_core.sql and 002_procedures.sql. SQL migrations are authoritative; there is no ORM, all access goes through mysql2.
 
 ```mermaid
 erDiagram

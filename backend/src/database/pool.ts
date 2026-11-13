@@ -1,5 +1,10 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
+import { readFileSync } from "node:fs";
+// AWS RDS: set DB_SSL_CA_FILE to the downloaded global-bundle.pem (or DB_SSL_CA to the PEM text).
+const sslCa = process.env.DB_SSL_CA_FILE
+  ? readFileSync(process.env.DB_SSL_CA_FILE, "utf8")
+  : process.env.DB_SSL_CA;
 export function connectPool(url: string) {
   return mysql.createPool({
     uri: url,
@@ -8,9 +13,7 @@ export function connectPool(url: string) {
     bigNumberStrings: true,
     timezone: "Z",
     multipleStatements: false,
-    ...(process.env.DB_SSL_CA
-      ? { ssl: { ca: process.env.DB_SSL_CA, rejectUnauthorized: true } }
-      : {}),
+    ...(sslCa ? { ssl: { ca: sslCa, rejectUnauthorized: true } } : {}),
   });
 }
 export const pool = connectPool(

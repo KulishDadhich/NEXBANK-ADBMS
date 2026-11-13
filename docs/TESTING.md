@@ -8,7 +8,7 @@ The authoritative evidence is GitHub Actions on isolated MySQL 8.4 databases. Th
 
 | Check | Result |
 | --- | --- |
-| Dependency installation and Prisma generation | Passed |
+| Dependency installation | Passed |
 | Backend and frontend TypeScript | Passed |
 | Backend unit tests | 13 passed |
 | Frontend component tests | 13 passed |

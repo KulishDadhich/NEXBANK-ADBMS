@@ -40,3 +40,6 @@ The implemented experiment records both repeated point reads and range counts wh
 ## Least privilege and views
 
 A view limits the shape of a query result, not who owns each row. The backend still filters user-owned accounts. Provisioning grants read access to views but no direct runtime writes to the financial ledger. A dedicated reporting-only SQL user can be granted SELECT on those views alone; the isolated integration suite verifies that this user can read the view but cannot read the base ledger.
+
+## Case study: stale snapshot read under REPEATABLE READ (migration 003)
+Two simultaneous transfers from one account both locked users/accounts in the same order (no deadlock), but the second transaction's plain `SELECT balance` returned the balance from its *snapshot* (taken before it waited), not the value just committed by the first. Result: the funds check passed, the UPDATE (a current read) drove the balance negative and only `CHECK ck_balance` stopped it, giving an HTTP 500. Fix: read the rows with `SELECT ... FOR UPDATE` after acquiring locks, which always sees the latest committed data. Lesson: in InnoDB, consistent (snapshot) reads and locking (current) reads can disagree inside one transaction; use locking reads for check-then-act logic. See database/migrations/003_fix_stale_reads.sql.

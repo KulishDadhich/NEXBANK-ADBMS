@@ -2,7 +2,7 @@ import { randomBytes, randomUUID, createHash } from "node:crypto";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import { rows, pool } from "../database/pool.js";
-import { findUserByEmail, prisma } from "../repositories/users.js";
+import { findUserByEmail, createUser } from "../repositories/users.js";
 import { ApiError } from "../utilities/errors.js";
 export const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 export function jwtSecret() {
@@ -32,13 +32,11 @@ export async function register(data: {
   password: string;
 }) {
   const id = randomUUID();
-  await prisma.user.create({
-    data: {
-      id,
-      fullName: data.fullName,
-      email: data.email,
-      passwordHash: await argon2.hash(data.password, { type: argon2.argon2id }),
-    },
+  await createUser({
+    id,
+    fullName: data.fullName,
+    email: data.email,
+    passwordHash: await argon2.hash(data.password, { type: argon2.argon2id }),
   });
   return newSession(id);
 }

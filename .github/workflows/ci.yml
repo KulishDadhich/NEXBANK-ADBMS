@@ -41,7 +41,6 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run prisma:generate -w backend
       - name: Create isolated lab database
         run: node scripts/create-test-db.mjs
       - run: npm run typecheck

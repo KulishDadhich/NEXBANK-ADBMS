@@ -4,7 +4,7 @@ Educational banking simulation. No real funds, card details, or payment gateway.
 
 ## Scope and stack
 
-React/TypeScript/Vite supplies a responsive client; React Hook Form and Zod validate input. Express validates independently and authorizes every account operation. Prisma handles ordinary user queries; mysql2 executes transactional stored procedures and laboratory sessions. MySQL 8.4/InnoDB is authoritative. Argon2id protects passwords. Access JWTs are short-lived, refresh tokens are opaque, hashed and rotated in MySQL. Pino logs operational failures without credentials.
+React/TypeScript/Vite supplies a responsive client; React Hook Form and Zod validate input. Express validates independently and authorizes every account operation. mysql2 executes all queries, the transactional stored procedures and the laboratory sessions. MySQL 8.4/InnoDB is authoritative. Argon2id protects passwords. Access JWTs are short-lived, refresh tokens are opaque, hashed and rotated in MySQL. Pino logs operational failures without credentials.
 
 ```mermaid
 flowchart TD

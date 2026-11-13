@@ -5,6 +5,19 @@ An educational ADBMS banking simulation using React, Express, TypeScript and MyS
 
 **Status:** source published on GitHub; TypeScript, 13 backend unit tests, 13 frontend tests, 25 real-MySQL integration tests, both production builds and 2 browser E2E tests passed in [CI run #5](https://github.com/KulishDadhich/NEXBANK-ADBMS/actions/runs/42765079615). Public deployment is not yet configured. See docs/PROJECT_STATUS.md and docs/DEPLOYMENT.md.
 
+## Quick start (no Docker, or with AWS RDS)
+Requirements: Node.js 22+ and a MySQL 8.x server (local install or AWS RDS, see docs/AWS_RDS_SETUP.md).
+```bash
+npm install
+mysql -u root -p < database/init-databases.sql      # creates nexbank_test and nexbank_lab
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS nexbank"
+npm run setup:local -- YOUR_MYSQL_ROOT_PASSWORD     # writes .env files with random secrets, prints admin login
+npm run setup:db                                    # migrate + seed
+npm run dev:backend                                 # terminal 1
+npm run dev:frontend                                # terminal 2 -> http://localhost:5173
+```
+For RDS, run `setup:local` with any password, then edit the three URLs in backend/.env as shown in docs/AWS_RDS_SETUP.md.
+
 ## Windows prerequisites
 Node.js 22+, Git, VS Code and Docker Desktop with Linux containers. MySQL Workbench/Postman are optional. Open this NEXBANK-ADBMS folder, the one containing package.json, in VS Code.
 
@@ -20,7 +33,6 @@ Start Docker Desktop, then:
 ```powershell
 docker compose up -d mysql
 docker compose ps
-npm run prisma:generate -w backend
 npm run db:migrate
 npm run db:seed
 ```
@@ -75,8 +87,9 @@ Ctrl+C in each Node terminal. `docker compose stop` stops MySQL while preserving
 - docs/API_DOCUMENTATION.md — endpoints and authorization
 - docs/SECURITY.md — controls and limitations
 - docs/TESTING.md — actual verification record
+- docs/AWS_RDS_SETUP.md — running the database on AWS RDS MySQL
 - docs/DEPLOYMENT.md — exact GitHub, Railway, Vercel and CI/CD setup
 - docs/VIVA_GUIDE.md — 40 simple presentation questions
 - docs/PROJECT_STATUS.md — completed work and blockers
 
-The complete SQL scripts are in database/migrations. Do not replace them with Prisma db push: Prisma is used for standard user operations; SQL owns routines, triggers, views and the financial ledger.
+The complete SQL scripts are in database/migrations. SQL owns the tables, routines, triggers, views and the financial ledger; the backend talks to MySQL through the mysql2 driver only.

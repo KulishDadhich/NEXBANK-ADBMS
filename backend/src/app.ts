@@ -74,7 +74,10 @@ app.use(
       message = err.message;
     }
     if (status === 500)
-      logger.error({ code: err.code || "INTERNAL" }, "Request failed");
+      logger.error(
+        { code: err.code || "INTERNAL", errno: err.errno, detail: err.sqlMessage || err.message },
+        "Request failed",
+      );
     res.status(status).json({ error: message });
   },
 );

@@ -7,7 +7,7 @@ COPY frontend/package.json frontend/package.json
 RUN npm ci --ignore-scripts
 COPY backend backend
 COPY database database
-RUN npm run prisma:generate -w backend && npm run build -w backend
+RUN npm run build -w backend
 ENV NODE_ENV=production
 USER node
 EXPOSE 4000

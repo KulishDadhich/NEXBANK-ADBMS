@@ -7,7 +7,6 @@ import { pool, rows } from "../src/database/pool.js";
 import { migrate } from "../src/database/migrate.js";
 import { seed } from "../src/database/seed.js";
 import { app } from "../src/app.js";
-import { prisma } from "../src/repositories/users.js";
 import { hash } from "../src/services/auth.js";
 import { runLab } from "../src/database/lab.js";
 const origin = "http://localhost:5173",
@@ -73,7 +72,6 @@ beforeAll(async () => {
 }, 60000);
 afterAll(async () => {
   await pool.end();
-  await prisma.$disconnect();
 });
 const balances = () =>
   rows("SELECT id,balance FROM accounts WHERE id IN (?,?) ORDER BY id", [a, b]);
